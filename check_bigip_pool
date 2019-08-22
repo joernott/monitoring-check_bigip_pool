@@ -1,0 +1,122 @@
+#!/bin/bash
+# Author Joern Ott <joern.ott@ott-consult.de>
+# Source: https://github.com/joernott/check_bigip_pool
+# License: GPLv3
+
+MIB="F5-BIGIP-LOCAL-MIB"
+MC_MIB="${MIB}::ltmPoolMemberCnt."
+AMC_MIB="${MIB}::ltmPoolActiveMemberCnt."
+RE='^[0-9]+$'
+
+function init() {
+    if [ ! -f "/usr/share/snmp/mibs/${MIB}.txt" ]; then
+        Unknown "Missing /usr/share/snmp/mibs/${MIB}.txt"
+    fi
+
+    if [ -z "${ADDRESS}" ]; then
+        Unknown "Host address of the LTM not specified"
+    fi
+
+    if [ -z "${POOL}" ]; then
+        Unknown "Pool not specified."
+    fi
+
+    if [ -z "${WARN_DOWN}" ]; then
+        WARN_DOWN=1
+    fi
+    if [ -z "${CRIT_DOWN}" ]; then
+        CRIT_DOWN=1
+    fi
+
+    if ! [[ ${WARN_DOWN} =~ $RE ]]; then
+        Unknown "Warn ${WARN_DOWN} is not a valid number"
+    fi
+    if ! [[ ${CRIT_DOWN} =~ $RE ]]; then
+        Unknown "Critical ${CRIT_DOWN} is not a valid number"
+    fi
+    if [ ${WARN_DOWN} -gt ${CRIT_DOWN} ]; then
+        Unknown "Warn ${WARN_DOWN} must not be greater than Critical ${CRIT_DOWN}"
+    fi
+}
+
+function usage() {
+    cat <<EOF
+Usage:
+    check_bigip_pool -h
+       Outputs this help text
+    check_bigip_pool -A <address> -p <pool> -w <warn> -c <critical>
+       Checks the pool <pool> (case sensitive) on the bigip <address.
+       If less than <warn> servers are down, it returns OK, otherwise
+       warn (>= <warn> and <= <critical>) or critical (>= <critical>).
+EOF
+    Unknown "Printed usage"
+
+}
+
+function OK() {
+    local MSG=$1
+    local DATA=$2
+    printf "OK- %s | %s\n" "${MSG}" "${DATA}"
+    exit 0
+}
+
+function Warning() {
+    local MSG=$1
+    local DATA=$2
+    printf "WARNING- %s | %s\n" "${MSG}" "${DATA}"
+    exit 1
+}
+
+function Critical() {
+    local MSG=$1
+    local DATA=$2
+    printf "CRITICAL- %s | %s\n" "${MSG}" "${DATA}"
+    exit 2
+}
+
+function Unknown() {
+    local MSG="$1"
+    printf "UNKNOWN- %s\n" "${MSG}"
+    exit 3
+}
+
+while getopts ":A:p:w:c:" ARG; do
+    case $ARG in
+        A)
+            ADDRESS=${OPTARG}
+            ;;
+        p)
+            POOL=${OPTARG}
+            ;;
+        w)
+            WARN_DOWN=${OPTARG}
+            ;;
+        c)
+            CRIT_DOWN=${OPTARG}
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+init
+
+MEMBER_COUNT=$(snmpwalk -v2c -m ${MIB} -c public ${ADDRESS} "${MC_MIB}\"${POOL}\""|sed -e 's|.* ||')
+if ! [[ ${MEMBER_COUNT} =~ $RE ]]; then
+    Unknown "Member count ${MEMBER_COUNT} is not a valid number"
+fi
+ACTIVE_COUNT=$(snmpwalk -v2c -m ${MIB} -c public ${ADDRESS} "${AMC_MIB}\"${POOL}\""|sed -e 's|.* ||')
+if ! [[ ${ACTIVE_COUNT} =~ $RE ]]; then
+    Unknown "Active count ${ACTIVE_COUNT} is not a valid number"
+fi
+DOWN=$((${MEMBER_COUNT}-${ACTIVE_COUNT}))
+if [ ${DOWN} -lt 0 ]; then
+    Unknown "More active members (${ACTIVE_COUNT}) than total members (${MEMBER_COUNT})."
+fi
+if [ ${DOWN} -lt ${WARN_DOWN} ]; then
+    OK "Pool ${POOL} is OK" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
+fi
+if [ { ${DOWN} -lt ${CRIT_DOWN} ]; then
+    Warning "Pool ${POOL} is degraded" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
+fi
+Critical "Pool ${POOL} is in a critical state" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
