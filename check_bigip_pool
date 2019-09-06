@@ -34,8 +34,8 @@ function init() {
     if ! [[ ${CRIT_DOWN} =~ $RE ]]; then
         Unknown "Critical ${CRIT_DOWN} is not a valid number"
     fi
-    if [ ${WARN_DOWN} -gt ${CRIT_DOWN} ]; then
-        Unknown "Warn ${WARN_DOWN} must not be greater than Critical ${CRIT_DOWN}"
+    if [ ${WARN_DOWN} -lt ${CRIT_DOWN} ]; then
+        Unknown "Warn ${WARN_DOWN} must not be less than Critical ${CRIT_DOWN}"
     fi
 }
 
