@@ -116,7 +116,7 @@ fi
 if [ ${DOWN} -lt ${WARN_DOWN} ]; then
     OK "Pool ${POOL} is OK" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
 fi
-if [ { ${DOWN} -lt ${CRIT_DOWN} ]; then
+if [ ${DOWN} -lt ${CRIT_DOWN} ]; then
     Warning "Pool ${POOL} is degraded" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
 fi
 Critical "Pool ${POOL} is in a critical state" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
