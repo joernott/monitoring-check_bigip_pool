@@ -94,6 +94,9 @@ while getopts ":A:p:w:c:" ARG; do
         c)
             CRIT_DOWN=${OPTARG}
             ;;
+        C)
+            PUBLIC=${OPTARG}
+            ;;
         *)
             usage
             ;;
@@ -101,11 +104,11 @@ while getopts ":A:p:w:c:" ARG; do
 done
 init
 
-MEMBER_COUNT=$(snmpwalk -v2c -m ${MIB} -c public ${ADDRESS} "${MC_MIB}\"${POOL}\""|sed -e 's|.* ||')
+MEMBER_COUNT=$(snmpwalk -v2c -m ${MIB} -c ${PUBLIC} ${ADDRESS} "${MC_MIB}\"${POOL}\""|sed -e 's|.* ||')
 if ! [[ ${MEMBER_COUNT} =~ $RE ]]; then
     Unknown "Member count ${MEMBER_COUNT} is not a valid number"
 fi
-ACTIVE_COUNT=$(snmpwalk -v2c -m ${MIB} -c public ${ADDRESS} "${AMC_MIB}\"${POOL}\""|sed -e 's|.* ||')
+ACTIVE_COUNT=$(snmpwalk -v2c -m ${MIB} -c ${PUBLIC} ${ADDRESS} "${AMC_MIB}\"${POOL}\""|sed -e 's|.* ||')
 if ! [[ ${ACTIVE_COUNT} =~ $RE ]]; then
     Unknown "Active count ${ACTIVE_COUNT} is not a valid number"
 fi
