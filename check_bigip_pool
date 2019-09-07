@@ -80,7 +80,7 @@ function Unknown() {
     exit 3
 }
 
-while getopts ":A:p:w:c:" ARG; do
+while getopts ":A:p:w:c:C:" ARG; do
     case $ARG in
         A)
             ADDRESS=${OPTARG}
