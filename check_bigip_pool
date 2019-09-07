@@ -113,8 +113,7 @@ if ! [[ ${ACTIVE_COUNT} =~ $RE ]]; then
     Unknown "Active count ${ACTIVE_COUNT} is not a valid number"
 fi
 DOWN=$((${MEMBER_COUNT}-${ACTIVE_COUNT}))
-if [ ${DOWN} <= 0 ]; then
-#Unknown "More active members (${ACTIVE_COUNT}) than total members (${MEMBER_COUNT})."
+if [ ${DOWN} -le 0 ]; then
     Critical "Pool ${POOL} has no active memebers" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
 fi
 if [ ${DOWN} -gt ${WARN_DOWN} ]; then
