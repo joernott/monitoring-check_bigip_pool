@@ -34,8 +34,8 @@ function init() {
     if ! [[ ${CRIT_DOWN} =~ $RE ]]; then
         Unknown "Critical ${CRIT_DOWN} is not a valid number"
     fi
-    if [ ${WARN_DOWN} -gt ${CRIT_DOWN} ]; then
-        Unknown "Warn ${WARN_DOWN} must not be greater than Critical ${CRIT_DOWN}"
+    if [ ${WARN_DOWN} -lt ${CRIT_DOWN} ]; then
+        Unknown "Warn ${WARN_DOWN} must not be less than Critical ${CRIT_DOWN}"
     fi
 }
 
@@ -46,8 +46,8 @@ Usage:
        Outputs this help text
     check_bigip_pool -A <address> -p <pool> -w <warn> -c <critical>
        Checks the pool <pool> (case sensitive) on the bigip <address.
-       If less than <warn> servers are down, it returns OK, otherwise
-       warn (>= <warn> and <= <critical>) or critical (>= <critical>).
+       Warns if pool members are less than warn Value
+       Critical if pool members are less than Crit  or members are 0
 EOF
     Unknown "Printed usage"
 
@@ -94,6 +94,9 @@ while getopts ":A:p:w:c:" ARG; do
         c)
             CRIT_DOWN=${OPTARG}
             ;;
+        C)
+            PUBLIC=${OPTARG}
+            ;;
         *)
             usage
             ;;
@@ -101,22 +104,24 @@ while getopts ":A:p:w:c:" ARG; do
 done
 init
 
-MEMBER_COUNT=$(snmpwalk -v2c -m ${MIB} -c public ${ADDRESS} "${MC_MIB}\"${POOL}\""|sed -e 's|.* ||')
+MEMBER_COUNT=$(snmpwalk -v2c -m ${MIB} -c ${PUBLIC} ${ADDRESS} "${MC_MIB}\"${POOL}\""|sed -e 's|.* ||')
 if ! [[ ${MEMBER_COUNT} =~ $RE ]]; then
     Unknown "Member count ${MEMBER_COUNT} is not a valid number"
 fi
-ACTIVE_COUNT=$(snmpwalk -v2c -m ${MIB} -c public ${ADDRESS} "${AMC_MIB}\"${POOL}\""|sed -e 's|.* ||')
+ACTIVE_COUNT=$(snmpwalk -v2c -m ${MIB} -c ${PUBLIC} ${ADDRESS} "${AMC_MIB}\"${POOL}\""|sed -e 's|.* ||')
 if ! [[ ${ACTIVE_COUNT} =~ $RE ]]; then
     Unknown "Active count ${ACTIVE_COUNT} is not a valid number"
 fi
 DOWN=$((${MEMBER_COUNT}-${ACTIVE_COUNT}))
-if [ ${DOWN} -lt 0 ]; then
-    Unknown "More active members (${ACTIVE_COUNT}) than total members (${MEMBER_COUNT})."
+if [ ${DOWN} -le 0 ]; then
+    Critical "Pool ${POOL} has no active memebers" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
 fi
-if [ ${DOWN} -lt ${WARN_DOWN} ]; then
+if [ ${DOWN} -gt ${WARN_DOWN} ]; then
     OK "Pool ${POOL} is OK" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
 fi
-if [ { ${DOWN} -lt ${CRIT_DOWN} ]; then
+if [ ${DOWN} -lt ${WARN_DOWN} ]; then
     Warning "Pool ${POOL} is degraded" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
 fi
-Critical "Pool ${POOL} is in a critical state" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
+if [ ${DOWN} -lt ${CRIT_DOWN} ]; then
+    Critical "Pool ${POOL} is in a critical state" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
+fi
