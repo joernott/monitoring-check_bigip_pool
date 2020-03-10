@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 
 function log() {
     local LEVEL=$1
@@ -28,7 +30,7 @@ function get_version() {
 }
 
 function init() {
-    RPMBUILD_DIR=$(dirname ${SCRIPT_DIR})
+    RPMBUILD_DIR=${SCRIPT_DIR}
     SPECS_DIR=${RPMBUILD_DIR}/SPECS
     RPMS_DIR=${RPMBUILD_DIR}/RPMS
     SRPMS_DIR=${RPMBUILD_DIR}/SRPMS
@@ -72,6 +74,7 @@ function check() {
 
 function get_archives() {
     if [ $FETCH -gt 0 ]; then
+        cd ${SOURCES_DIR}
         log 5 Fetch check_bigip_pool-${VERSION}
         if [ -f check_bigip_pool-${VERSION}.tar.gz ]; then
             log 4 Using already fetched check_bigip_pool-${VERSION}
@@ -85,9 +88,8 @@ function build() {
     cd ${RPMBUILD_DIR}
     log 4 "Building icinga_check_bigip_pool ${CHECK_BIGIP_VERSION}-${CHECK_BIGIP_RELEASE}"
     rpmbuild --define "_topdir $(pwd)" \
-             --define "version ${CHECK_BIGIP_VERSION}" \
-             --define "release ${CHECK_BIGIP_RELEASE}" \
-             --define "user ${USER}" \
+             --define "version ${VERSION}" \
+             --define "release ${RELEASE}" \
              -ba ${SPECS_DIR}/icinga_check_bigip_pool.spec
 }
 
