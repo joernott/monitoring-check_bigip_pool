@@ -79,7 +79,7 @@ function get_archives() {
         if [ -f check_bigip_pool-${VERSION}.tar.gz ]; then
             log 4 Using already fetched check_bigip_pool-${VERSION}
         else
-            curl -sSjL https://github.com/joernott/check_bigip_pool/releases/download/${VERSION}/check_bigip_pool-${VERSION}.tar.gz -o check_bigip_pool-${VERSION}.tar.gz
+            curl -sSjL https://github.com/joernott/check_bigip_pool/archive/v${VERSION}.tar.gz -o check_bigip_pool-${VERSION}.tar.gz
         fi
     fi
 }
