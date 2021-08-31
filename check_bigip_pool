@@ -114,14 +114,14 @@ if ! [[ ${ACTIVE_COUNT} =~ $RE ]]; then
 fi
 DOWN=$((${MEMBER_COUNT}-${ACTIVE_COUNT}))
 if [ ${DOWN} -le 0 ]; then
-    Critical "Pool ${POOL} has no active memebers" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
+    Critical "Pool ${POOL} has no active memebers" "members=${MEMBER_COUNT};;;; active=${ACTIVE_COUNT};;;; down=${DOWN};${WARN_DOWN};${CRIT_DOWN};;"
 fi
 if [ ${DOWN} -gt ${WARN_DOWN} ]; then
-    OK "Pool ${POOL} is OK" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
+    OK "Pool ${POOL} is OK" "members=${MEMBER_COUNT};;;; active=${ACTIVE_COUNT};;;; down=${DOWN};${WARN_DOWN};${CRIT_DOWN};;"
 fi
 if [ ${DOWN} -lt ${WARN_DOWN} ]; then
-    Warning "Pool ${POOL} is degraded" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
+    Warning "Pool ${POOL} is degraded" "members=${MEMBER_COUNT};;;; active=${ACTIVE_COUNT};;;; down=${DOWN};${WARN_DOWN};${CRIT_DOWN};;"
 fi
 if [ ${DOWN} -lt ${CRIT_DOWN} ]; then
-    Critical "Pool ${POOL} is in a critical state" "members=${MEMBER_COUNT}, active=${ACTIVE_COUNT}, down=${DOWN}"
+    Critical "Pool ${POOL} is in a critical state" "members=${MEMBER_COUNT};;;; active=${ACTIVE_COUNT};;;; down=${DOWN};${WARN_DOWN};${CRIT_DOWN};;"
 fi
