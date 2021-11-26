@@ -34,8 +34,8 @@ function init() {
     if ! [[ ${CRIT_DOWN} =~ $RE ]]; then
         Unknown "Critical ${CRIT_DOWN} is not a valid number"
     fi
-    if [ ${WARN_DOWN} -lt ${CRIT_DOWN} ]; then
-        Unknown "Warn ${WARN_DOWN} must not be less than Critical ${CRIT_DOWN}"
+    if [ ${WARN_DOWN} -gt ${CRIT_DOWN} ]; then
+        Unknown "Warn ${WARN_DOWN} must not be greater than Critical ${CRIT_DOWN}"
     fi
 }
 
@@ -113,15 +113,18 @@ if ! [[ ${ACTIVE_COUNT} =~ $RE ]]; then
     Unknown "Active count ${ACTIVE_COUNT} is not a valid number"
 fi
 DOWN=$((${MEMBER_COUNT}-${ACTIVE_COUNT}))
-if [ ${DOWN} -le 0 ]; then
+if [ ${MEMBER_COUNT} -le 0 ]; then
     Critical "Pool ${POOL} has no active memebers" "members=${MEMBER_COUNT};;;; active=${ACTIVE_COUNT};;;; down=${DOWN};${WARN_DOWN};${CRIT_DOWN};;"
 fi
-if [ ${DOWN} -gt ${WARN_DOWN} ]; then
-    OK "Pool ${POOL} is OK" "members=${MEMBER_COUNT};;;; active=${ACTIVE_COUNT};;;; down=${DOWN};${WARN_DOWN};${CRIT_DOWN};;"
-fi
-if [ ${DOWN} -lt ${WARN_DOWN} ]; then
-    Warning "Pool ${POOL} is degraded" "members=${MEMBER_COUNT};;;; active=${ACTIVE_COUNT};;;; down=${DOWN};${WARN_DOWN};${CRIT_DOWN};;"
-fi
-if [ ${DOWN} -lt ${CRIT_DOWN} ]; then
+if [ ${DOWN} -ge ${CRIT_DOWN} ]; then
     Critical "Pool ${POOL} is in a critical state" "members=${MEMBER_COUNT};;;; active=${ACTIVE_COUNT};;;; down=${DOWN};${WARN_DOWN};${CRIT_DOWN};;"
+fi
+if [ ${DOWN} -ge ${WARN_DOWN} ]; then
+  Warning "Pool ${POOL} is degraded" "members=${MEMBER_COUNT};;;; active=${ACTIVE_COUNT};;;; down=${DOWN};${WARN_DOWN};${CRIT_DOWN};;"
+fi
+if [ ${DOWN} -gt 0 ]; then
+    OK "Pool ${POOL} is degraded but within expected range" "members=${MEMBER_COUNT};;;; active=${ACTIVE_COUNT};;;; down=${DOWN};${WARN_DOWN};${CRIT_DOWN};;"
+fi
+if [ ${DOWN} -eq 0 ]; then
+    OK "Pool ${POOL} is OK" "members=${MEMBER_COUNT};;;; active=${ACTIVE_COUNT};;;; down=${DOWN};${WARN_DOWN};${CRIT_DOWN};;"
 fi
