@@ -24,10 +24,10 @@ members are down.
 rm -rf "$RPM_BUILD_ROOT"
 mkdir -p "$RPM_BUILD_ROOT/usr/lib64/nagios/plugins"
 cp check_bigip_pool "$RPM_BUILD_ROOT/usr/lib64/nagios/plugins/"
+chmod 0755 "$RPM_BUILD_ROOT/usr/lib64/nagios/plugins/check_bigip_pool"
 
 %files
-%defattr(-,root,root,755)
-/usr/lib64/nagios/plugins/check_bigip_pool
+%attr(755,root,root) /usr/lib64/nagios/plugins/check_bigip_pool
 
 %changelog
 * Thu Apr 28 2022 Joern Ott <joern.ott@ott-consult.de>
